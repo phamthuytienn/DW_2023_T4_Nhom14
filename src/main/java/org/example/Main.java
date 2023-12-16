@@ -88,113 +88,12 @@ public class Main {
         }
     }
 
-    /**
-     * Lấy danh sách các đối tượng DataFileConfig từ cơ sở dữ liệu
-     *
-     * @param connection
-     * @return
-     */
-    public static List<DataFileConfig> getAllDataFileConfigs(Connection connection) {
-        List<DataFileConfig> dataFileConfigs = new ArrayList<>();
-
-        try {
-            // Tạo đối tượng Statement để thực hiện truy vấn
-            Statement statement = connection.createStatement();
-
-            // Thực hiện truy vấn
-            String query = "SELECT * FROM data_file_configs";
-            ResultSet resultSet = statement.executeQuery(query);
-
-            // Xử lý kết quả truy vấn
-            while (resultSet.next()) {
-                DataFileConfig dataFileConfig = new DataFileConfig();
-                dataFileConfig.id = resultSet.getInt("id");
-                dataFileConfig.name = resultSet.getString("name");
-                dataFileConfig.code = resultSet.getString("code");
-                dataFileConfig.description = resultSet.getString("description");
-                dataFileConfig.source_path = resultSet.getString("source_path");
-                dataFileConfig.location = resultSet.getString("location");
-                dataFileConfig.format = resultSet.getString("format");
-                dataFileConfig.separator = resultSet.getString("separator");
-                dataFileConfig.columns = resultSet.getString("columns");
-                dataFileConfig.destination = resultSet.getString("destination");
-                dataFileConfig.created_at = resultSet.getTimestamp("created_at");
-                dataFileConfig.updated_at = resultSet.getTimestamp("updated_at");
-                dataFileConfig.created_by = resultSet.getInt("created_by");
-                dataFileConfig.updated_by = resultSet.getInt("updated_by");
-                dataFileConfig.backup_path = resultSet.getString("backup_path");
-                dataFileConfig.sourcetination = resultSet.getString("sourcetination");
-
-                // Thêm đối tượng DataFileConfig vào danh sách
-                dataFileConfigs.add(dataFileConfig);
-            }
-
-            // Đóng tài nguyên
-            resultSet.close();
-            statement.close();
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-
-        return dataFileConfigs;
-    }
 
     /**
-     * Lấy danh sách các đối tượng DataFile từ cơ sở dữ liệu
+     * Truy xuất và trả về danh sách các dữ liệu thời tiết từ bảng staging trong cơ sở dữ liệu.
      *
-     * @param connection
-     * @return
-     */
-    public static List<DataFile> getAllDataFiles(Connection connection) {
-        List<DataFile> dataFiles = new ArrayList<>();
-
-        try {
-            // Tạo đối tượng Statement để thực hiện truy vấn
-            Statement statement = connection.createStatement();
-
-            // Thực hiện truy vấn
-            String query = "SELECT * FROM data_files";
-            ResultSet resultSet = statement.executeQuery(query);
-
-            // Xử lý kết quả truy vấn
-            while (resultSet.next()) {
-
-                DataFile dataFile = new DataFile();
-                dataFile.id = resultSet.getInt("id");
-                dataFile.name = resultSet.getString("name");
-                dataFile.row_count = resultSet.getInt("row_count");
-                dataFile.df_config_id = resultSet.getInt("df_config_id");
-                dataFile.status = resultSet.getString("status");
-                dataFile.file_timestamp = resultSet.getTimestamp("file_timestamp");
-                dataFile.data_range_from = resultSet.getTimestamp("data_range_from");
-                dataFile.data_range_to = resultSet.getTimestamp("data_range_to");
-                dataFile.note = resultSet.getString("note");
-                dataFile.created_at = resultSet.getTimestamp("created_at");
-                dataFile.updated_at = resultSet.getTimestamp("updated_at");
-                dataFile.created_by = resultSet.getInt("created_by");
-                dataFile.updated_by = resultSet.getInt("updated_by");
-                dataFile.is_inserted = resultSet.getBoolean("is_inserted");
-                dataFile.deleted_at = resultSet.getTimestamp("deleted_at");
-
-                // Thêm đối tượng DataFile vào danh sách
-                dataFiles.add(dataFile);
-            }
-
-            // Đóng tài nguyên
-            resultSet.close();
-            statement.close();
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-
-        return dataFiles;
-    }
-
-    /**
-     * Cập nhật trạng thái is_inserted của đối tượng DataFile
-     *
-     * @param connection
-     * @return
+     * @param connection Kết nối tới cơ sở dữ liệu.
+     * @return Danh sách chứa các dữ liệu thời tiết từ bảng staging.
      */
     public static List<WeatherData> getAllStaging(Connection connection) {
         List<WeatherData> stagings = new ArrayList<>();
@@ -238,10 +137,14 @@ public class Main {
     }
 
     /**
-     * Cập nhật trạng thái is_inserted của đối tượng DataFile
+     * Lấy danh sách các đối tượng DataFile đang chờ xử lý.
+     * Đối tượng DataFile được xem xét nếu đáp ứng các điều kiện sau:
+     * - Trạng thái (status) của DataFile là 'SU' (Success).
+     * - Ngày tạo (created_at) của DataFile là ngày hiện tại.
+     * - Trạng thái is_inserted của DataFile là 0 (chưa được chèn vào cơ sở dữ liệu).
      *
-     * @param connection
-     * @return
+     * @param connection Đối tượng Connection đến cơ sở dữ liệu.
+     * @return Danh sách các đối tượng DataFile chờ xử lý.
      */
     public static List<DataFile> getPendingDataFiles(Connection connection) {
         List<DataFile> pendingDataFiles = new ArrayList<>();
@@ -252,8 +155,7 @@ public class Main {
 
 
             // Thực hiện truy vấn với điều kiện
-            String query = "SELECT \n" + "    data_files.id AS id,\n" + "    data_files.name AS name,\n" + "    data_files.row_count AS row_count,\n" + "    data_files.df_config_id AS df_config_id,\n" + "    data_files.status AS status,\n" + "    data_files.file_timestamp AS file_timestamp,\n" + "    data_files.data_range_from AS data_range_from,\n" + "    data_files.data_range_to AS data_range_to,\n" + "    data_files.note AS note,\n" + "    data_files.created_at AS created_at,\n" + "    data_files.updated_at AS updated_at,\n" + "    data_files.created_by AS created_by,\n" + "    data_files.updated_by AS updated_by,\n" + "    data_files.is_inserted AS is_inserted,\n" + "    data_files.deleted_at AS deleted_at,\n" + "   data_file_configs.id AS df_id,\n" + "    data_file_configs.name AS df_name,\n" + "    data_file_configs.code AS df_code,\n" + "    data_file_configs.description AS df_description,\n" + "    data_file_configs.source_path AS df_source_path,\n" + "    data_file_configs.location AS df_location,\n" + "    data_file_configs.format AS df_format,\n" + "    data_file_configs.separator AS df_separator,\n" + "    data_file_configs.columns AS df_columns,\n" + "    data_file_configs.destination AS df_destination,\n" + "    data_file_configs.created_at AS df_created_at,\n" + "    data_file_configs.updated_at AS df_updated_at,\n" + "    data_file_configs.created_by AS df_created_by,\n" + "    data_file_configs.updated_by AS df_updated_by,\n" + "    data_file_configs.backup_path AS df_backup_path,\n" + "    data_file_configs.sourcetination AS df_sourcetination\n" + "FROM \n" + "    data_files\n" + "LEFT JOIN \n" + "    data_file_configs ON data_files.df_config_id = data_file_configs.id\n" + "WHERE \n" + "" +
-                    "    data_files.status = 'SU' \n" + "    AND DATE(data_files.created_at) = DATE(CURRENT_DATE) \n" + "    AND data_files.is_inserted = 0;";
+            String query = "SELECT \n" + "    data_files.id AS id,\n" + "    data_files.name AS name,\n" + "    data_files.row_count AS row_count,\n" + "    data_files.df_config_id AS df_config_id,\n" + "    data_files.status AS status,\n" + "    data_files.file_timestamp AS file_timestamp,\n" + "    data_files.data_range_from AS data_range_from,\n" + "    data_files.data_range_to AS data_range_to,\n" + "    data_files.note AS note,\n" + "    data_files.created_at AS created_at,\n" + "    data_files.updated_at AS updated_at,\n" + "    data_files.created_by AS created_by,\n" + "    data_files.updated_by AS updated_by,\n" + "    data_files.is_inserted AS is_inserted,\n" + "    data_files.deleted_at AS deleted_at,\n" + "   data_file_configs.id AS df_id,\n" + "    data_file_configs.name AS df_name,\n" + "    data_file_configs.code AS df_code,\n" + "    data_file_configs.description AS df_description,\n" + "    data_file_configs.source_path AS df_source_path,\n" + "    data_file_configs.location AS df_location,\n" + "    data_file_configs.format AS df_format,\n" + "    data_file_configs.separator AS df_separator,\n" + "    data_file_configs.columns AS df_columns,\n" + "    data_file_configs.destination AS df_destination,\n" + "    data_file_configs.created_at AS df_created_at,\n" + "    data_file_configs.updated_at AS df_updated_at,\n" + "    data_file_configs.created_by AS df_created_by,\n" + "    data_file_configs.updated_by AS df_updated_by,\n" + "    data_file_configs.backup_path AS df_backup_path,\n" + "    data_file_configs.sourcetination AS df_sourcetination\n" + "FROM \n" + "    data_files\n" + "LEFT JOIN \n" + "    data_file_configs ON data_files.df_config_id = data_file_configs.id\n" + "WHERE \n" + "" + "    data_files.status = 'SU' \n" + "    AND DATE(data_files.created_at) = DATE(CURRENT_DATE) \n" + "    AND data_files.is_inserted = 0;";
             java.sql.PreparedStatement preparedStatement = connection.prepareStatement(query);
             ResultSet resultSet = preparedStatement.executeQuery();
 
@@ -277,6 +179,14 @@ public class Main {
         return pendingDataFiles;
     }
 
+    /**
+     * Xóa toàn bộ dữ liệu trong bảng weather_data.
+     * Phương thức này sẽ thực hiện câu lệnh TRUNCATE TABLE để xóa hết dữ liệu trong bảng,
+     * làm cho trạng thái is_inserted của các đối tượng DataFile trở về 0 (chưa được chèn).
+     *
+     * @param connection Đối tượng Connection đến cơ sở dữ liệu.
+     * @throws SQLException Nếu có lỗi xảy ra trong quá trình thực hiện câu lệnh SQL.
+     */
     public static void truncateTable(Connection connection) throws SQLException {
         String query = "TRUNCATE TABLE weather_data";
 
@@ -289,11 +199,13 @@ public class Main {
     }
 
     /**
-     * Cập nhật trạng thái is_inserted của đối tượng DataFile
+     * Kiểm tra sự tồn tại của một tệp trong thư mục.
+     * Phương thức này kiểm tra xem thư mục và tệp cụ thể có tồn tại không, và trả về đường dẫn đầy đủ của tệp nếu nó tồn tại.
+     * Nếu thư mục hoặc tệp không tồn tại, hoặc đường dẫn không hợp lệ, phương thức sẽ trả về chuỗi rỗng.
      *
-     * @param folderPath
-     * @param fileName
-     * @return
+     * @param folderPath Đường dẫn đến thư mục chứa tệp.
+     * @param fileName   Tên của tệp cần kiểm tra.
+     * @return Đường dẫn đầy đủ của tệp nếu tồn tại, hoặc chuỗi rỗng nếu không tồn tại.
      */
     public static String isFileExists(String folderPath, String fileName) {
         Path folder = Paths.get(folderPath);
@@ -311,11 +223,14 @@ public class Main {
 
 
     /**
-     * Cập nhật trạng thái is_inserted của đối tượng DataFile
+     * Sao chép một tệp từ một đường dẫn nguồn đến một thư mục đích.
+     * Phương thức này thực hiện việc sao chép tệp từ đường dẫn nguồn đến thư mục đích,
+     * và trả về đường dẫn đầy đủ của tệp mới tạo nếu sao chép thành công.
+     * Nếu có lỗi trong quá trình sao chép, phương thức in ra trace của lỗi và trả về chuỗi rỗng.
      *
-     * @param sourceFilePath
-     * @param destinationFolderPath
-     * @return
+     * @param sourceFilePath        Đường dẫn đến tệp nguồn cần sao chép.
+     * @param destinationFolderPath Đường dẫn đến thư mục đích cho tệp sao chép.
+     * @return Đường dẫn đầy đủ của tệp mới nếu sao chép thành công, hoặc chuỗi rỗng nếu có lỗi.
      */
     public static String copyFileToFolder(String sourceFilePath, String destinationFolderPath) {
         try {
@@ -337,11 +252,13 @@ public class Main {
     }
 
     /**
-     * Cập nhật trạng thái is_inserted của đối tượng DataFile
+     * Cập nhật thông tin của đối tượng DataFile trong cơ sở dữ liệu.
+     * Phương thức này thực hiện truy vấn SQL UPDATE để cập nhật các thuộc tính của đối tượng DataFile
+     * trong bảng data_files dựa trên giá trị của trường id.
      *
-     * @param connection
-     * @param dataFile
-     * @return
+     * @param connection Đối tượng Connection đến cơ sở dữ liệu.
+     * @param dataFile   Đối tượng DataFile chứa thông tin mới cần cập nhật.
+     * @return true nếu cập nhật thành công, false nếu có lỗi hoặc không có dòng nào bị ảnh hưởng.
      */
     public static boolean updateDataFile(Connection connection, DataFile dataFile) {
         try {
@@ -385,12 +302,6 @@ public class Main {
         }
     }
 
-    /**
-     * Cập nhật trạng thái is_inserted của đối tượng DataFile
-     *
-     * @param fileName
-     * @return
-     */
 
     /**
      * Cập nhật trạng thái is_inserted của đối tượng DataFile
@@ -405,11 +316,14 @@ public class Main {
     }
 
     /**
-     * Cập nhật trạng thái is_inserted của đối tượng DataFile
+     * Gọi một danh sách các stored procedure từ cơ sở dữ liệu bất đồng bộ (asynchronously).
+     * Phương thức này thực hiện việc gọi các stored procedure từ danh sách được cung cấp và trả về một CompletableFuture
+     * chứa danh sách các giá trị đầu ra của các stored procedure tương ứng.
      *
-     * @param connection
-     * @param storedProcedureInfos
-     * @return
+     * @param connection           Đối tượng Connection đến cơ sở dữ liệu.
+     * @param storedProcedureInfos Danh sách các thông tin về stored procedure cần gọi. Mỗi phần tử trong danh sách chứa
+     *                             tên của stored procedure (String) và danh sách tham số đầu vào (List<Object>).
+     * @return CompletableFuture<List < Integer>> Chứa danh sách các giá trị đầu ra của các stored procedure tương ứng.
      */
     public static CompletableFuture<List<Integer>> callStoredProceduresAsync(Connection connection, List<List<Object>> storedProcedureInfos) {
         List<CompletableFuture<Integer>> futures = storedProcedureInfos.stream().map(info -> callStoredProcedureAsync(connection, (String) info.get(0), (List<Object>) info.get(1))).collect(Collectors.toList());
@@ -418,12 +332,14 @@ public class Main {
     }
 
     /**
-     * Cập nhật trạng thái is_inserted của đối tượng DataFile
+     * Gọi một stored procedure từ cơ sở dữ liệu.
+     * Phương thức này thực hiện việc gọi một stored procedure với tên và tham số cung cấp,
+     * bao gồm cả tham số đầu vào và tham số đầu ra, và trả về giá trị của tham số đầu ra sau khi gọi procedure.
      *
-     * @param connection
-     * @param storedProcedureName
-     * @param parameters
-     * @return
+     * @param connection          Đối tượng Connection đến cơ sở dữ liệu.
+     * @param storedProcedureName Tên của stored procedure cần gọi.
+     * @param parameters          Danh sách các tham số đầu vào của stored procedure.
+     * @return Giá trị của tham số đầu ra sau khi gọi stored procedure, hoặc -1 nếu có lỗi.
      */
     public static int callStoredProcedure(Connection connection, String storedProcedureName, List<Object> parameters) {
         StringBuilder callStatement = new StringBuilder("{CALL " + storedProcedureName + "(");
@@ -460,10 +376,11 @@ public class Main {
 
 
     /**
-     * Xóa tệp văn bản
+     * Xóa một tệp văn bản từ hệ thống tệp.
+     * Phương thức này thực hiện việc xóa một tệp văn bản từ hệ thống tệp dựa trên đường dẫn của tệp.
      *
-     * @param filePath
-     * @return
+     * @param filePath Đường dẫn đến tệp văn bản cần xóa.
+     * @return true nếu xóa thành công, false nếu tệp không tồn tại hoặc có lỗi trong quá trình xóa.
      */
     public static boolean deleteFile(String filePath) {
         try {
@@ -488,10 +405,10 @@ public class Main {
     }
 
     /**
-     * Thực thi staging
+     * Thực hiện quá trình staging bằng cách nạp dữ liệu từ tệp văn bản vào bảng weather_data trong cơ sở dữ liệu.
      *
-     * @param path
-     * @param connection
+     * @param path       Đường dẫn đến tệp văn bản chứa dữ liệu cần staging.
+     * @param connection Đối tượng Connection đến cơ sở dữ liệu.
      */
     public static void excuteStaging(String path, Connection connection) {
         try {
@@ -540,36 +457,12 @@ public class Main {
                     List<WeatherData> allStaging = getAllStaging(connectionStaging);
                     for (WeatherData staging : allStaging) {
                         System.out.println(staging);
-                        WeatherDataTransform weatherDataTransform = WeatherDataTransform.builder()
-                                .district(staging.getDistrict())
-                                .province(staging.getProvince())
-                                .date(Date.valueOf(staging.getDate()))
-                                .time(Time.valueOf(staging.getTime() + ":00"))
-                                .temperatureMin(Float.parseFloat(staging.getTemperatureMin()))
-                                .temperatureMax(Float.parseFloat(staging.getTemperatureMax()))
-                                .description(staging.getDescription())
-                                .humidity(Float.parseFloat(staging.getHumidity()))
-                                .windSpeed(Float.parseFloat(staging.getWindSpeed()))
-                                .uvIndex(Float.parseFloat(staging.getUvIndex()))
-                                .visibility(Float.parseFloat(staging.getVisibility()))
-                                .pressure(Integer.parseInt(staging.getPressure()))
-                                .stopPoint(Float.parseFloat(staging.getStopPoint()))
-                                .url(staging.getUrl())
-                                .ip(staging.getIp())
-                                .build();
+                        WeatherDataTransform weatherDataTransform = WeatherDataTransform.builder().district(staging.getDistrict()).province(staging.getProvince()).date(Date.valueOf(staging.getDate())).time(Time.valueOf(staging.getTime() + ":00")).temperatureMin(Float.parseFloat(staging.getTemperatureMin())).temperatureMax(Float.parseFloat(staging.getTemperatureMax())).description(staging.getDescription()).humidity(Float.parseFloat(staging.getHumidity())).windSpeed(Float.parseFloat(staging.getWindSpeed())).uvIndex(Float.parseFloat(staging.getUvIndex())).visibility(Float.parseFloat(staging.getVisibility())).pressure(Integer.parseInt(staging.getPressure())).stopPoint(Float.parseFloat(staging.getStopPoint())).url(staging.getUrl()).ip(staging.getIp()).build();
 
-                        int result = callStoredProcedure(connectionWarehouse, "load_datetime_dim_type_2", List.of(
-                                weatherDataTransform.getDate(), weatherDataTransform.getTime()
-                        ));
-                        int lo = callStoredProcedure(connectionWarehouse, "load_location_dim_type_3", List.of(
-                                weatherDataTransform.getProvince(), weatherDataTransform.getDistrict(), weatherDataTransform.getUrl()
-                        ));
+                        int result = callStoredProcedure(connectionWarehouse, "load_datetime_dim_type_2", List.of(weatherDataTransform.getDate(), weatherDataTransform.getTime()));
+                        int lo = callStoredProcedure(connectionWarehouse, "load_location_dim_type_3", List.of(weatherDataTransform.getProvince(), weatherDataTransform.getDistrict(), weatherDataTransform.getUrl()));
 
-                        int idFact = callStoredProcedure(connectionWarehouse, "load_weather_fact_type_2", List.of(
-                                result, lo, weatherDataTransform.getTemperatureMin(), weatherDataTransform.getTemperatureMax(), weatherDataTransform.getHumidity(),
-                                weatherDataTransform.getVisibility(), weatherDataTransform.getWindSpeed(), weatherDataTransform.getStopPoint(),
-                                weatherDataTransform.getUvIndex(), weatherDataTransform.getUrl(), weatherDataTransform.getDescription(), weatherDataTransform.getPressure()
-                        ));
+                        int idFact = callStoredProcedure(connectionWarehouse, "load_weather_fact_type_2", List.of(result, lo, weatherDataTransform.getTemperatureMin(), weatherDataTransform.getTemperatureMax(), weatherDataTransform.getHumidity(), weatherDataTransform.getVisibility(), weatherDataTransform.getWindSpeed(), weatherDataTransform.getStopPoint(), weatherDataTransform.getUvIndex(), weatherDataTransform.getUrl(), weatherDataTransform.getDescription(), weatherDataTransform.getPressure()));
                     }
                     truncateTable(connectionStaging);
                     dataFile.setIs_inserted(true);
